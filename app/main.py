@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import orders
+from app.api.routes import orders, webhooks
 
 # FastAPI automatically generates beautiful, interactive API documentation
 # using Swagger UI. We can access it at the /docs endpoint.
@@ -23,6 +23,7 @@ app.add_middleware(
 
 # Include our API routes cleanly
 app.include_router(orders.router, prefix="/api/v1")
+app.include_router(webhooks.router, prefix="/api/v1")
 
 @app.get("/")
 async def root():

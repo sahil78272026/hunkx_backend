@@ -1,6 +1,7 @@
 import asyncio
 from app.core.database import engine, Base
-from app.models.order import Order # Import all models here so Base knows about them
+from app.models.order import Order
+from app.models.product import Product # Import all models here so Base knows about them
 
 async def init_models():
     async with engine.begin() as conn:

@@ -58,3 +58,17 @@ async def create_order(order_data: OrderCreateSchema, db: AsyncSession = Depends
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to create order: {str(e)}")
+
+@router.get("/{order_id}", response_model=OrderResponseSchema)
+async def get_order_status(order_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    Fetch an order's status by its internal ID. Used by the Tracking page.
+    """
+    from sqlalchemy.future import select
+    result = await db.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one_or_none()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        
+    return order
