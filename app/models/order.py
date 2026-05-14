@@ -11,6 +11,7 @@ class Order(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid, index=True)
     customer_name = Column(String, nullable=False)
+    customer_email = Column(String, nullable=True)
     customer_mobile = Column(String, nullable=False)
     customer_address = Column(String, nullable=False)
     customer_pincode = Column(String, nullable=False)

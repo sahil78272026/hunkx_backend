@@ -10,6 +10,7 @@ class OrderItemSchema(BaseModel):
 
 class OrderCreateSchema(BaseModel):
     customer_name: str
+    customer_email: str
     customer_mobile: str
     customer_address: str
     customer_pincode: str

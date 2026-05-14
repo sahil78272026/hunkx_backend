@@ -49,5 +49,12 @@ class PaymentService:
             print(f"Payment verification failed: {str(e)}")
             return False
 
+    def fetch_order(self, razorpay_order_id: str) -> dict:
+        """
+        Fetches the current status of an order from Razorpay.
+        Useful for reconciliation if webhooks fail.
+        """
+        return self.client.order.fetch(razorpay_order_id)
+
 # Create a singleton instance to use throughout the app
 payment_service = PaymentService()

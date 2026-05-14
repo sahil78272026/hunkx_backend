@@ -30,8 +30,10 @@ async def razorpay_webhook(request: Request, db: AsyncSession = Depends(get_db))
             razorpay_order_id = payment_entity.get("order_id")
             
             if razorpay_order_id:
-                # 2. Find the order in our database
-                result = await db.execute(select(Order).where(Order.razorpay_order_id == razorpay_order_id))
+                # 2. Find the order in our database (lock it to prevent race conditions)
+                result = await db.execute(
+                    select(Order).where(Order.razorpay_order_id == razorpay_order_id).with_for_update()
+                )
                 order = result.scalar_one_or_none()
                 
                 # 3. If order exists and isn't already paid (Idempotency)
@@ -55,6 +57,10 @@ async def razorpay_webhook(request: Request, db: AsyncSession = Depends(get_db))
                     # Save changes
                     await db.commit()
                     print(f"✅ Order {order.id} marked as PAID and stock decremented.")
+                    
+                    # 5. Send Email Confirmation
+                    from app.services.email_service import email_service
+                    email_service.send_order_confirmation(order)
                     
         return {"status": "success"}
     except Exception as e:

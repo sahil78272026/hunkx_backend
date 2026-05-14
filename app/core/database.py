@@ -4,7 +4,7 @@ from app.core.config import settings
 
 # Create async engine for modern, non-blocking DB connections
 # We use asyncpg because it is much faster and doesn't block the Python event loop
-engine = create_async_engine(settings.DATABASE_URL, echo=True)
+engine = create_async_engine(settings.DATABASE_URL, echo=False)
 
 # Create an async session maker
 AsyncSessionLocal = async_sessionmaker(bind=engine, expire_on_commit=False)

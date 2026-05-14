@@ -29,6 +29,7 @@ async def create_order(order_data: OrderCreateSchema, db: AsyncSession = Depends
         # 1. Create the Database Order first
         new_order = Order(
             customer_name=order_data.customer_name,
+            customer_email=order_data.customer_email,
             customer_mobile=order_data.customer_mobile,
             customer_address=order_data.customer_address,
             customer_pincode=order_data.customer_pincode,

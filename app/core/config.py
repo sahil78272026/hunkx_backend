@@ -8,8 +8,12 @@ class Settings(BaseSettings):
     # Razorpay Settings
     RAZORPAY_KEY_ID: str = ""
     RAZORPAY_KEY_SECRET: str = ""
+    
+    # Resend Email Settings
+    RESEND_API_KEY: str = ""
 
     class Config:
         env_file = ".env"
+        extra = "allow" # This allows other variables in .env without crashing
 
 settings = Settings()
