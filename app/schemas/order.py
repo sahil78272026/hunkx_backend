@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional
+from datetime import datetime
 
 class OrderItemSchema(BaseModel):
     id: str
@@ -22,6 +23,8 @@ class OrderResponseSchema(BaseModel):
     status: str
     razorpay_order_id: Optional[str] = None
     total_amount: int
+    items: List[OrderItemSchema]
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

@@ -16,6 +16,9 @@ class Order(Base):
     customer_address = Column(String, nullable=False)
     customer_pincode = Column(String, nullable=False)
     
+    # Link to Supabase User (UUID string)
+    user_id = Column(String, index=True, nullable=True)
+    
     total_amount = Column(Integer, nullable=False) # In rupees
     items = Column(JSON, nullable=False) # Array of items ordered
     

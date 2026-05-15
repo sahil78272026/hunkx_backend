@@ -7,6 +7,8 @@ from app.models.order import Order
 from app.schemas.order import OrderCreateSchema, OrderResponseSchema
 from app.services.payment_service import payment_service
 
+from app.core.security import get_current_user
+
 router = APIRouter(
     prefix="/orders",
     tags=["Orders"], # Groups this endpoint under 'Orders' in Swagger UI
@@ -14,16 +16,14 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=OrderResponseSchema, status_code=status.HTTP_201_CREATED)
-async def create_order(order_data: OrderCreateSchema, db: AsyncSession = Depends(get_db)):
+async def create_order(
+    order_data: OrderCreateSchema, 
+    db: AsyncSession = Depends(get_db),
+    user = Depends(get_current_user)
+):
     """
     Create a new order in the system and generate a secure Razorpay Order.
-    
-    - **customer_name**: Full name of the customer.
-    - **customer_mobile**: 10-digit mobile number.
-    - **items**: Array of products they are buying.
-    
-    This endpoint talks to Razorpay securely on the backend, ensuring the amount 
-    cannot be tampered with by a malicious user on the frontend.
+    Requires a logged-in user.
     """
     try:
         # 1. Create the Database Order first
@@ -35,7 +35,8 @@ async def create_order(order_data: OrderCreateSchema, db: AsyncSession = Depends
             customer_pincode=order_data.customer_pincode,
             total_amount=order_data.total_amount,
             items=[item.model_dump() for item in order_data.items],
-            status="CREATED"
+            status="CREATED",
+            user_id=user.id
         )
         db.add(new_order)
         # Flush to generate our internal order ID without committing the transaction yet
@@ -59,6 +60,16 @@ async def create_order(order_data: OrderCreateSchema, db: AsyncSession = Depends
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to create order: {str(e)}")
+
+@router.get("/my-orders", response_model=List[OrderResponseSchema])
+async def get_my_orders(db: AsyncSession = Depends(get_db), user = Depends(get_current_user)):
+    """
+    Fetch all orders placed by the currently logged-in user.
+    """
+    from sqlalchemy.future import select
+    result = await db.execute(select(Order).where(Order.user_id == user.id).order_by(Order.created_at.desc()))
+    orders = result.scalars().all()
+    return orders
 
 @router.get("/{order_id}", response_model=OrderResponseSchema)
 async def get_order_status(order_id: str, db: AsyncSession = Depends(get_db)):
