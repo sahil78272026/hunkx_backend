@@ -4,7 +4,10 @@ from sqlalchemy.future import select
 from app.core.database import get_db
 from app.models.order import Order
 from app.models.product import Product
+from app.services.payment_service import payment_service
+from app.core.config import settings
 import json
+import razorpay
 
 router = APIRouter(
     prefix="/webhooks",
@@ -17,11 +20,24 @@ async def razorpay_webhook(request: Request, db: AsyncSession = Depends(get_db))
     Razorpay calls this endpoint automatically when a payment succeeds.
     It updates the order status to PAID and decrements the product stock.
     """
-    # 1. In a production app, we would verify the 'x-razorpay-signature' header here 
-    # to ensure the request actually came from Razorpay.
-    
     try:
         body = await request.body()
+        signature = request.headers.get("x-razorpay-signature")
+
+        if not signature:
+            raise HTTPException(status_code=400, detail="Missing signature")
+
+        payment_service.client.utility.verify_webhook_signature(
+            body.decode("utf-8"),
+            signature,
+            settings.RAZORPAY_WEBHOOK_SECRET
+        )
+    except razorpay.errors.SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    try:
         payload = json.loads(body)
         event = payload.get("event")
         
