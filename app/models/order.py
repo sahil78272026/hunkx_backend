@@ -24,6 +24,7 @@ class Order(Base):
     
     # State Machine for the order flow
     status = Column(String, default="CREATED", nullable=False) # CREATED, PAID, PACKED, SHIPPED, DELIVERED
+    status_history = Column(JSON, nullable=False, default=list) # e.g. [{"status": "CREATED", "timestamp": "..."}]
     
     # Razorpay tracking
     razorpay_order_id = Column(String, unique=True, index=True, nullable=True)

@@ -21,6 +21,7 @@ class OrderCreateSchema(BaseModel):
 class OrderResponseSchema(BaseModel):
     id: str
     status: str
+    status_history: List[dict] = []
     razorpay_order_id: Optional[str] = None
     total_amount: int
     items: List[OrderItemSchema]

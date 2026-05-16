@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import orders, webhooks
+from app.api.routes import orders, webhooks, admin, products
 import logging
 import time
 import asyncio
@@ -37,10 +37,13 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+import os
+
 # CORS configuration to allow our Next.js frontend to talk to this backend
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"], 
+    allow_origins=[frontend_url, "http://localhost:3000"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -60,6 +63,8 @@ async def log_requests(request: Request, call_next):
 # Include our API routes cleanly
 app.include_router(orders.router, prefix="/api/v1")
 app.include_router(webhooks.router, prefix="/api/v1")
+app.include_router(admin.router, prefix="/api/v1")
+app.include_router(products.router, prefix="/api/v1")
 
 @app.get("/")
 async def root():

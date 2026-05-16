@@ -47,6 +47,10 @@ async def run_reconciliation_pass():
                         if locked_order.status != "PAID":
                             locked_order.status = "PAID"
                             
+                            history = list(locked_order.status_history) if locked_order.status_history else []
+                            history.append({"status": "PAID", "timestamp": datetime.now(timezone.utc).isoformat()})
+                            locked_order.status_history = history
+                            
                             for item in locked_order.items:
                                 product_id = item.get("id")
                                 quantity_bought = item.get("quantity", 1)

@@ -25,3 +25,14 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             detail=str(e),
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+def get_admin_user(user = Depends(get_current_user)):
+    from app.core.config import settings
+    # Ensure settings.ADMIN_EMAILS exists and contains the user's email
+    admin_emails = [email.strip() for email in settings.ADMIN_EMAILS.split(",") if email.strip()]
+    if not user.email or user.email not in admin_emails:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required"
+        )
+    return user

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.models.order import Order
@@ -36,6 +37,7 @@ async def create_order(
             total_amount=order_data.total_amount,
             items=[item.model_dump() for item in order_data.items],
             status="CREATED",
+            status_history=[{"status": "CREATED", "timestamp": datetime.now(timezone.utc).isoformat()}],
             user_id=user.id
         )
         db.add(new_order)

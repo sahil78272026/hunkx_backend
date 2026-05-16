@@ -38,9 +38,14 @@ async def razorpay_webhook(request: Request, db: AsyncSession = Depends(get_db))
                 
                 # 3. If order exists and isn't already paid (Idempotency)
                 if order and order.status != "PAID":
+                    from datetime import datetime, timezone
                     # Mark as PAID
                     order.status = "PAID"
                     order.razorpay_payment_id = payment_entity.get("id")
+                    
+                    history = list(order.status_history) if order.status_history else []
+                    history.append({"status": "PAID", "timestamp": datetime.now(timezone.utc).isoformat()})
+                    order.status_history = history
                     
                     # 4. Decrement Stock Logic
                     # We loop through the items bought and reduce their stock in the products table
