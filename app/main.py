@@ -40,11 +40,12 @@ app = FastAPI(
 import os
 
 # CORS configuration to allow our Next.js frontend to talk to this backend
-frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+# We use wildcard "*" to completely eliminate CORS issues. 
+# Security is handled via our Bearer tokens (Supabase Auth), not cookies, so allow_credentials=False is safe and correct.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url, "http://localhost:3000"], 
-    allow_credentials=True,
+    allow_origins=["*"], 
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
