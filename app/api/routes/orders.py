@@ -86,3 +86,33 @@ async def get_order_status(order_id: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Order not found")
         
     return order
+
+from pydantic import BaseModel
+class RefundRequestSchema(BaseModel):
+    reason: str
+
+@router.post("/{order_id}/request-refund", response_model=OrderResponseSchema)
+async def request_refund(order_id: str, payload: RefundRequestSchema, db: AsyncSession = Depends(get_db)):
+    """
+    User requests a refund for an order.
+    """
+    from sqlalchemy.future import select
+    result = await db.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one_or_none()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        
+    if order.status not in ["PAID", "PACKED", "SHIPPED", "DELIVERED"]:
+        raise HTTPException(status_code=400, detail="Order is not eligible for refund request.")
+        
+    order.status = "REFUND_REQUESTED"
+    order.refund_reason = payload.reason
+    
+    history = list(order.status_history) if order.status_history else []
+    history.append({"status": "REFUND_REQUESTED", "timestamp": datetime.now(timezone.utc).isoformat(), "reason": payload.reason})
+    order.status_history = history
+    
+    await db.commit()
+    await db.refresh(order)
+    return order

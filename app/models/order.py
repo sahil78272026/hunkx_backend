@@ -30,6 +30,10 @@ class Order(Base):
     razorpay_order_id = Column(String, unique=True, index=True, nullable=True)
     razorpay_payment_id = Column(String, nullable=True)
     
+    # Refund tracking
+    refund_reason = Column(String, nullable=True)
+    refund_rejection_reason = Column(String, nullable=True)
+    
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

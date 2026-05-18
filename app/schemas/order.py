@@ -26,6 +26,8 @@ class OrderResponseSchema(BaseModel):
     total_amount: int
     items: List[OrderItemSchema]
     customer_email: Optional[str] = None
+    refund_reason: Optional[str] = None
+    refund_rejection_reason: Optional[str] = None
     created_at: Optional[datetime] = None
 
     class Config:

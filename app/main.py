@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import orders, webhooks, admin, products
+from app.api.routes import orders, webhooks, admin, products, analytics
 import logging
 import time
 import asyncio
@@ -66,6 +66,7 @@ app.include_router(orders.router, prefix="/api/v1")
 app.include_router(webhooks.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
 app.include_router(products.router, prefix="/api/v1")
+app.include_router(analytics.router, prefix="/api/v1")
 
 @app.get("/")
 async def root():

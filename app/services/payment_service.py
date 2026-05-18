@@ -56,5 +56,16 @@ class PaymentService:
         """
         return self.client.order.fetch(razorpay_order_id)
 
+    def refund_payment(self, payment_id: str, amount_in_rupees: int = None) -> dict:
+        """
+        Initiates a refund for a captured payment.
+        If amount is None, full refund is issued.
+        """
+        data = {}
+        if amount_in_rupees:
+            data['amount'] = amount_in_rupees * 100
+        
+        return self.client.payment.refund(payment_id, data)
+
 # Create a singleton instance to use throughout the app
 payment_service = PaymentService()
