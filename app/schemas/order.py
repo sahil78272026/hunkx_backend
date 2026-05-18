@@ -25,6 +25,7 @@ class OrderResponseSchema(BaseModel):
     razorpay_order_id: Optional[str] = None
     total_amount: int
     items: List[OrderItemSchema]
+    customer_email: Optional[str] = None
     created_at: Optional[datetime] = None
 
     class Config:
