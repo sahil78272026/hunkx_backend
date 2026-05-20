@@ -92,7 +92,12 @@ class RefundRequestSchema(BaseModel):
     reason: str
 
 @router.post("/{order_id}/request-refund", response_model=OrderResponseSchema)
-async def request_refund(order_id: str, payload: RefundRequestSchema, db: AsyncSession = Depends(get_db)):
+async def request_refund(
+    order_id: str, 
+    payload: RefundRequestSchema, 
+    db: AsyncSession = Depends(get_db),
+    user = Depends(get_current_user)
+):
     """
     User requests a refund for an order.
     """
@@ -102,6 +107,9 @@ async def request_refund(order_id: str, payload: RefundRequestSchema, db: AsyncS
     
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+        
+    if order.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to request refund for this order")
         
     if order.status not in ["PAID", "PACKED", "SHIPPED", "DELIVERED"]:
         raise HTTPException(status_code=400, detail="Order is not eligible for refund request.")
