@@ -22,6 +22,7 @@ app.log
 .pytest_cache/
 htmlcov/
 .coverage
+tests/
 
 # OS generated files
 .DS_Store
