@@ -109,7 +109,7 @@ async def refund_order(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    if order.status not in ["PAID", "PACKED", "SHIPPED"]:
+    if order.status not in ["PAID", "PACKED", "SHIPPED", "DELIVERED", "REFUND_REQUESTED"]:
         raise HTTPException(status_code=400, detail=f"Cannot refund order with status: {order.status}")
 
     if not order.razorpay_payment_id:

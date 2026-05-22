@@ -4,6 +4,7 @@ from typing import List
 from datetime import datetime, timezone
 
 from app.core.database import get_db
+from pydantic import BaseModel
 from app.models.order import Order
 from app.schemas.order import OrderCreateSchema, OrderResponseSchema
 from app.services.payment_service import payment_service
@@ -62,6 +63,72 @@ async def create_order(
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to create order: {str(e)}")
+
+class VerifyPaymentSchema(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
+
+@router.post("/verify-payment", response_model=OrderResponseSchema)
+async def verify_payment(
+    payload: VerifyPaymentSchema,
+    db: AsyncSession = Depends(get_db)
+):
+    from sqlalchemy.future import select
+    from datetime import datetime, timezone
+    from app.models.product import Product
+    
+    try:
+        # 1. Verify signature using our existing payment_service
+        is_valid = payment_service.verify_signature(
+            payload.razorpay_order_id, 
+            payload.razorpay_payment_id, 
+            payload.razorpay_signature
+        )
+        if not is_valid:
+            raise HTTPException(status_code=400, detail="Invalid payment signature")
+            
+        # 2. Lock the order to prevent race conditions with webhooks
+        result = await db.execute(
+            select(Order).where(Order.razorpay_order_id == payload.razorpay_order_id).with_for_update()
+        )
+        order = result.scalar_one_or_none()
+        
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+            
+        # 3. Update if not already PAID
+        if order.status != "PAID":
+            order.status = "PAID"
+            order.razorpay_payment_id = payload.razorpay_payment_id
+            
+            history = list(order.status_history) if order.status_history else []
+            history.append({"status": "PAID", "timestamp": datetime.now(timezone.utc).isoformat()})
+            order.status_history = history
+            
+            # Decrement Stock
+            for item in order.items:
+                product_id = item.get("id")
+                quantity_bought = item.get("quantity", 1)
+                
+                prod_result = await db.execute(select(Product).where(Product.id == product_id))
+                product = prod_result.scalar_one_or_none()
+                
+                if product and product.stock >= quantity_bought:
+                    product.stock -= quantity_bought
+                    
+            await db.commit()
+            
+            # Optional: Send Email Confirmation
+            from app.services.email_service import email_service
+            email_service.send_order_confirmation(order)
+            
+        await db.refresh(order)
+        return order
+        
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Verification failed: {str(e)}")
 
 @router.get("/my-orders", response_model=List[OrderResponseSchema])
 async def get_my_orders(db: AsyncSession = Depends(get_db), user = Depends(get_current_user)):
