@@ -56,8 +56,13 @@ async def razorpay_webhook(request: Request, db: AsyncSession = Depends(get_db))
                         prod_result = await db.execute(select(Product).where(Product.id == product_id))
                         product = prod_result.scalar_one_or_none()
                         
-                        if product and product.stock >= quantity_bought:
-                            product.stock -= quantity_bought
+                        size_bought = item.get("size")
+                        if product and product.stock:
+                            stock_dict = dict(product.stock)
+                            if size_bought and size_bought in stock_dict:
+                                if stock_dict[size_bought] >= quantity_bought:
+                                    stock_dict[size_bought] -= quantity_bought
+                                    product.stock = stock_dict
                     
                     # Save changes
                     await db.commit()
