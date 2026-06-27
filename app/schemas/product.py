@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 class ProductBaseSchema(BaseModel):
     name: str
@@ -8,7 +8,7 @@ class ProductBaseSchema(BaseModel):
     description: Optional[str] = None
     images: List[str]
     sizes: List[str]
-    stock: int = 0
+    stock: Dict[str, int] = {}
     active: bool = True
 
 class ProductCreateSchema(ProductBaseSchema):
@@ -21,7 +21,7 @@ class ProductUpdateSchema(BaseModel):
     description: Optional[str] = None
     images: Optional[List[str]] = None
     sizes: Optional[List[str]] = None
-    stock: Optional[int] = None
+    stock: Optional[Dict[str, int]] = None
     active: Optional[bool] = None
 
 class ProductResponseSchema(ProductBaseSchema):
