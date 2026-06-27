@@ -1,5 +1,8 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.database import get_db
 from app.api.routes import orders, webhooks, admin, products, analytics, addresses
 import logging
 import time
@@ -76,3 +79,13 @@ async def root():
         "status": "success", 
         "message": "Hunkx Backend Layer 2 is online. Visit http://127.0.0.1:8000/docs for Swagger API documentation."
     }
+
+@app.get("/health")
+async def health_check(db: AsyncSession = Depends(get_db)):
+    try:
+        # Ping the database
+        await db.execute(text("SELECT 1"))
+        return {"status": "success", "message": "Server and Database are healthy"}
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        raise HTTPException(status_code=503, detail="Database connection failed")
